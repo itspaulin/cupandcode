@@ -1,8 +1,7 @@
-import { motion, useInView } from 'framer-motion';
+import { motion, useInView, AnimatePresence } from 'framer-motion';
 import { useRef, useState } from 'react';
 import { Coffee, Snowflake, Cookie, Salad, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import drinksImage from '@/assets/drinks-showcase.jpg';
 import foodImage from '@/assets/food-spread.jpg';
 
@@ -128,68 +127,110 @@ const Menu = () => {
           </div>
         </motion.div>
 
-        {/* Menu Tabs */}
+        {/* Menu Navigation */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.6 }}
+          className="mb-12"
         >
-          <Tabs value={activeCategory} onValueChange={setActiveCategory} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 mb-12 bg-muted/50 p-1 rounded-xl">
-              {menuCategories.map((category) => (
-                <TabsTrigger 
-                  key={category.id} 
-                  value={category.id}
-                  className="flex items-center space-x-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300"
-                >
-                  <category.icon className="w-4 h-4" />
-                  <span className="hidden sm:inline">{category.name}</span>
-                  <span className="sm:hidden">{category.name.split(' ')[0]}</span>
-                </TabsTrigger>
-              ))}
-            </TabsList>
-
+          {/* Custom Tab Navigation */}
+          <div className="grid w-full grid-cols-2 lg:grid-cols-4 mb-12 bg-muted/50 p-1 rounded-xl max-w-4xl mx-auto">
             {menuCategories.map((category) => (
-              <TabsContent key={category.id} value={category.id}>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                  className="grid lg:grid-cols-2 xl:grid-cols-3 gap-6"
-                >
-                  {menuItems[category.id].map((item, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="bg-card/80 backdrop-blur-sm p-6 rounded-xl border border-border/50 hover:shadow-elegant hover:border-primary/30 transition-all duration-300 group relative"
-                    >
-                      {item.popular && (
-                        <div className="absolute -top-3 -right-3 bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-bold flex items-center space-x-1">
-                          <Star className="w-3 h-3 fill-current" />
-                          <span>Popular</span>
-                        </div>
-                      )}
-                      
-                      <div className="flex justify-between items-start mb-3">
-                        <h3 className="font-bold text-lg group-hover:text-primary transition-colors">
-                          {item.name}
-                        </h3>
-                        <span className="text-primary font-bold text-lg ml-4 flex-shrink-0">
-                          {item.price}
-                        </span>
-                      </div>
-                      
-                      <p className="text-muted-foreground text-sm leading-relaxed">
-                        {item.description}
-                      </p>
-                    </motion.div>
-                  ))}
-                </motion.div>
-              </TabsContent>
+              <motion.button
+                key={category.id}
+                onClick={() => setActiveCategory(category.id)}
+                className={`flex items-center justify-center space-x-2 py-3 px-4 rounded-lg transition-all duration-300 relative overflow-hidden ${
+                  activeCategory === category.id
+                    ? 'text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                {/* Active background */}
+                {activeCategory === category.id && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute inset-0 bg-primary rounded-lg"
+                    initial={false}
+                    transition={{
+                      type: "spring",
+                      stiffness: 500,
+                      damping: 30
+                    }}
+                  />
+                )}
+                
+                {/* Content */}
+                <category.icon className="w-4 h-4 relative z-10" />
+                <span className="hidden sm:inline relative z-10 font-medium">
+                  {category.name}
+                </span>
+                <span className="sm:hidden relative z-10 font-medium">
+                  {category.name.split(' ')[0]}
+                </span>
+              </motion.button>
             ))}
-          </Tabs>
+          </div>
+
+          {/* Menu Content with AnimatePresence */}
+          <div className="relative min-h-[600px]">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeCategory}
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                transition={{
+                  duration: 0.4,
+                  ease: [0.23, 1, 0.32, 1]
+                }}
+                className="grid lg:grid-cols-2 xl:grid-cols-3 gap-6"
+              >
+                {menuItems[activeCategory]?.map((item, index) => (
+                  <motion.div
+                    key={`${activeCategory}-${index}`}
+                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: -20 }}
+                    transition={{
+                      delay: index * 0.05,
+                      duration: 0.3,
+                      ease: [0.23, 1, 0.32, 1]
+                    }}
+                    className="bg-card/80 backdrop-blur-sm p-6 rounded-xl border border-border/50 hover:shadow-elegant hover:border-primary/30 transition-all duration-300 group relative"
+                    whileHover={{ y: -2 }}
+                  >
+                    {item.popular && (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: index * 0.05 + 0.2 }}
+                        className="absolute -top-3 -right-3 bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-bold flex items-center space-x-1"
+                      >
+                        <Star className="w-3 h-3 fill-current" />
+                        <span>Popular</span>
+                      </motion.div>
+                    )}
+                    
+                    <div className="flex justify-between items-start mb-3">
+                      <h3 className="font-bold text-lg group-hover:text-primary transition-colors">
+                        {item.name}
+                      </h3>
+                      <span className="text-primary font-bold text-lg ml-4 flex-shrink-0">
+                        {item.price}
+                      </span>
+                    </div>
+                    
+                    <p className="text-muted-foreground text-sm leading-relaxed">
+                      {item.description}
+                    </p>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </motion.div>
 
         {/* CTA Section */}
